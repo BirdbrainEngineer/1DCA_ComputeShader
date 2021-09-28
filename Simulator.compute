@@ -1,0 +1,10 @@
+
+#pragma kernel CAsim
+
+RWTexture2D<float4> tex;
+
+[numthreads(8,8,1)]
+void CAsim (uint3 id : SV_DispatchThreadID)
+{
+    //todo
+}
