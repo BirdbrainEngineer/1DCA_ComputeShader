@@ -1,0 +1,40 @@
+
+#pragma kernel Viewport
+
+struct Cell{
+    int state;
+    int rule;
+};
+
+Texture2D<float4> input;
+//RWStructuredBuffer<Cell> input;
+RWTexture2D<float4> output;
+float4 ruleColors[8];
+int renderMode;
+int2 inputDims;
+int2 outputDims;
+
+int IntClamp(int x, int minimum, int maximum){
+    if(x > maximum){ return maximum; }
+    else if(x < minimum){ return minimum; }
+    else { return x; }
+}
+
+[numthreads(8,8,1)]
+void Viewport (uint3 id : SV_DispatchThreadID)
+{
+    float4 pixelColor = float4(0.0, 0.0, 0.0, 0.0);
+    float4 pixel = input[id.xy];
+    int cellState = (int)pixel.a;
+    int cellRule = (int)pixel.b; 
+    switch(renderMode){
+        case 0:     pixelColor = pixel.a == 0 ? float4(0.0, 0.0, 0.0, 1.0) : float4(1.0, 1.0, 1.0, 1.0);
+                    break;
+        case 1:     pixelColor = float4(ruleColors[(int)pixel.b].r, ruleColors[(int)pixel.b].g, ruleColors[(int)pixel.b].b, ruleColors[(int)pixel.b].a);
+                    break;
+        default:    pixelColor = float4(-1.0, -1.0, -1.0, -1.0);
+                    break;
+    }
+    int2 outputCoords = int2(id.x, outputDims.y - id.y - 1);
+    output[outputCoords.xy] = pixelColor;
+}

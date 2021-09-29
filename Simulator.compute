@@ -1,10 +1,23 @@
 
 #pragma kernel CAsim
 
-RWTexture2D<float4> tex;
+struct Cell{
+    int state;
+    int rule;
+};
 
-[numthreads(8,8,1)]
+RWStructuredBuffer<Cell> input;
+RWStructuredBuffer<Cell> output;
+int rightEdge;
+int rule;
+
+[numthreads(32,1,1)]
 void CAsim (uint3 id : SV_DispatchThreadID)
 {
-    //todo
+    int ruleVector = 0;
+    ruleVector = id.x == 0 ? input[rightEdge].state << 2 : input[id.x - 1].state << 2;
+    ruleVector |= input[id.x].state << 1;
+    ruleVector |= id.x == rightEdge ? input[0].state : input[id.x + 1].state;
+    output[id.x].state = (rule >> ruleVector) & 0x01;
+    output[id.x].rule = ruleVector;
 }
