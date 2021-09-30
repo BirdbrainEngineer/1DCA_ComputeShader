@@ -2,8 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-
-
 public class Dispatcher{
     public static readonly int SIMBLOCKSIZE = 32;
     public bool isFinished;
@@ -31,7 +29,7 @@ public class Dispatcher{
             Debug.Log("Initialization Failed: Resulting Datastructure too large!");
         }
         else if(width > 0 && generations > 0 && initData.Count > 0){
-            this.paddedWidth = (int)(Mathf.Ceil((float)width / (float)Dispatcher.SIMBLOCKSIZE) * Dispatcher.SIMBLOCKSIZE);
+            this.paddedWidth = ((int)Mathf.Ceil((float)width / (float)Dispatcher.SIMBLOCKSIZE) * Dispatcher.SIMBLOCKSIZE);
             this.data = new Datastructure(width, generations, initData.Count, initData);
             this.simulator.SetInt("rule", this.rule);
             this.simulator.SetInt("rightEdge", width - 1);
@@ -47,6 +45,8 @@ public class Dispatcher{
     }
 
     public void Simulate(){
+        System.Diagnostics.Stopwatch timer = new System.Diagnostics.Stopwatch();
+        timer.Start();
         float timeTaken = Time.time;
         for(int i = 0; i < this.data.initData.Count; i++){
             this.buffers[0].SetData(this.data.ParseInitializer(i, this.paddedWidth), 0, 0, this.paddedWidth);
@@ -61,6 +61,7 @@ public class Dispatcher{
         }
         foreach(var buffer in this.buffers){ buffer.Release(); }
         this.isFinished = true;
-        Debug.Log("Simulation completed in: " + (Time.time - timeTaken).ToString() + " seconds.");
+        timer.Stop();
+        Debug.Log("Simulation completed in: " + timer.ElapsedMilliseconds.ToString() + " milliseconds.");
     }
 }

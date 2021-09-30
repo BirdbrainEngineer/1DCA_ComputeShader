@@ -11,6 +11,7 @@ public class Controller : MonoBehaviour
     public byte rule = 0;
     public int width = 0;
     public int generations = 0;
+    public int boardToView = 0;
 
     private Datastructure data;
     private List<uint[]> initData;
@@ -18,14 +19,12 @@ public class Controller : MonoBehaviour
     private Dispatcher dispatcher;
     private RenderTexture temp;
     private Texture2D activeBoard;
+    private int boardViewed = -1;
 
     void Start()
     {
-        this.initData = new List<uint[]>();
-        uint[] randomints = new uint[60];
-        for(int i = 0; i < 60; i++){randomints[i] = (uint)Random.Range(0, 0x7fffffff); }
-        this.initData.Add(randomints);
-        //this.initData.Add(new uint[1]{0x00008000});
+        //this.initData = GetRandomData(width, 16);
+        this.initData = FillRange(0xffff, 16);
         this.kernelID = this.viewportShader.FindKernel("Viewport");
         this.dispatcher = new Dispatcher(simulationShader, rule);
         this.dispatcher.Initialize(width, generations, this.initData);
@@ -36,25 +35,22 @@ public class Controller : MonoBehaviour
         this.viewportShader.SetInt("renderMode", renderMode);
         this.activeBoard = new Texture2D(width, generations, TextureFormat.RGBAFloat, false);
         this.activeBoard.filterMode = FilterMode.Point;
-        this.activeBoard.SetPixelData(this.data.boards[0].BoardToTexture(), 0, 0);
-        for(int i = 0; i < 32; i++){print(this.data.boards[0].board[i].state);}
-        this.activeBoard.Apply();
         this.viewportShader.SetTexture(this.kernelID, "input", this.activeBoard);
         this.temp = new RenderTexture(width, generations, 24);
         this.temp.enableRandomWrite = true;
         this.temp.filterMode = FilterMode.Point;
         this.temp.wrapMode = TextureWrapMode.Clamp;
         this.temp.Create();
-        print("Board Size: " + this.data.boards[0].board.Length.ToString());
-        print("Should be: " + width * generations);
-        print((this.data.boards[0].board.Length / width).ToString());
-        print("Resolution: " + this.temp.width.ToString() + " x " + this.temp.height.ToString());
         this.viewportShader.SetTexture(this.kernelID, "output", this.temp);
         this.viewportShader.SetInts("outputDims", new int[2]{width, generations});
     }
 
     void OnRenderImage(RenderTexture src, RenderTexture dest){
-        if(this.data.boards[0].board == null){
+        if(this.boardViewed != boardToView){
+            this.activeBoard.SetPixelData(this.data.boards[boardToView].BoardToTexture(), 0, 0);
+            this.activeBoard.Apply();
+        }
+        if(this.data.boards[boardToView].board == null){
             Graphics.Blit(src, dest);
             Debug.Log("Data null!");
         }
@@ -63,6 +59,27 @@ public class Controller : MonoBehaviour
             Graphics.Blit(this.temp, dest);
         }
     }
+
+    public List<uint[]> GetRandomData(int width, int boards){
+        List<uint[]> result = new List<uint[]>();
+        int elements = (int)Mathf.Ceil((float)width / (float)32);
+        for(int i = 0; i < boards; i++){
+            result.Add(new uint[elements]);
+            for(int j = 0; j < elements; j++){
+                result[i][j] = (uint)Random.Range(0x00000000, 0xffffffff);
+            }
+        }
+        return result;
+    }
+
+    public List<uint[]> FillRange(int range, int shiftFactor){
+        List<uint[]> result = new List<uint[]>();
+        for(int i = 0; i < range; i++){
+            result.Add(new uint[1]{(uint)(i << shiftFactor)});
+        }
+        return result;
+    }
+    
 
     public float[] ruleColors = new float[8 * 4]{
         0.0f, 0.0f, 0.0f, 1.0f,
@@ -74,17 +91,4 @@ public class Controller : MonoBehaviour
         1.0f, 0.0f, 1.0f, 1.0f,
         1.0f, 1.0f, 1.0f, 1.0f,
     };
-
-    public static readonly uint[] TEST = new uint[60]{
-                0x00008000, 0x60020030, 0x00070010, 0x00000000, 0x00362000, 0x80008000,
-                0x00008000, 0x60020030, 0x00070010, 0x00000000, 0x00362000, 0x80008000,
-                0x00008000, 0x60020030, 0x00070010, 0x00000000, 0x00362000, 0x80008000,
-                0x00008000, 0x60020030, 0x00070010, 0x00000000, 0x00362000, 0x80008000,
-                0x00008000, 0x60020030, 0x00070010, 0x00000000, 0x00362000, 0x80008000,
-                0x00008000, 0x60020030, 0x00070010, 0x00000000, 0x00362000, 0x80008000,
-                0x00008000, 0x60020030, 0x00070010, 0x00000000, 0x00362000, 0x80008000,
-                0x00008000, 0x60020030, 0x00070010, 0x00000000, 0x00362000, 0x80008000,
-                0x00008000, 0x60020030, 0x00070010, 0x00000000, 0x00362000, 0x80008000,
-                0x00008000, 0x60020030, 0x00070010, 0x00000000, 0x00362000, 0x80008000,
-            };
 }
