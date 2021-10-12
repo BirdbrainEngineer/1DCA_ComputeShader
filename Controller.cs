@@ -1,3 +1,6 @@
+//Attach this script to Main Camera
+//Attach Simulator.compute and Viewport.compute to simulationShader and viewportshader respectively in the inspector
+
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -23,8 +26,8 @@ public class Controller : MonoBehaviour
 
     void Start()
     {
-        //this.initData = GetRandomData(width, 16);
-        this.initData = FillRange(0xffff, 16);
+        this.initData = GetRandomData(width, 16);
+        //this.initData = FillRange(0xffff, 16);
         this.kernelID = this.viewportShader.FindKernel("Viewport");
         this.dispatcher = new Dispatcher(simulationShader, rule);
         this.dispatcher.Initialize(width, generations, this.initData);
